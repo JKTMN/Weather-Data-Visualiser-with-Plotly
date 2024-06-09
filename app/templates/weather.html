@@ -3,11 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Data</title>
+    <title>Weather Data Visualizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Weather Data for {{ city }}</h1>
-    <p>Temperature: {{ temperature }} K</p>
-    <p>Humidity: {{ humidity }}%</p>
+    <div class="container">
+        <h1>Weather Data Visualizer</h1>
+        <form action="/weather" method="POST">
+            <input type="text" name="city" placeholder="Enter city name" required>
+            <button type="submit">Get Weather</button>
+        </form>
+        {% if city %}
+            <div class="weather-info">
+                <h2>Weather Data for {{ city }}</h2>
+                <div class="weather-details">
+                    <div class="weather-item">
+                        <span class="label">Current Time:</span>
+                        <span class="value">{{ current_time }}</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Current Date:</span>
+                        <span class="value">{{ current_date }}</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Temperature:</span>
+                        <span class="value">{{ temperature }} °C</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Description:</span>
+                        <span class="value">{{ description }}</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Wind Speed:</span>
+                        <span class="value">{{ wind_speed }} m/s</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Wind Direction:</span>
+                        <span class="value">{{ wind_direction }}°</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Sunrise:</span>
+                        <span class="value">{{ sunrise }}</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="label">Sunset:</span>
+                        <span class="value">{{ sunset }}</span>
+                    </div>
+                </div>
+                <img src="http://openweathermap.org/img/wn/{{ icon }}.png" alt="Weather Icon">
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>

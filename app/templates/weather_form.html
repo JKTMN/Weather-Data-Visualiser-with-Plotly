@@ -6,8 +6,19 @@
     <title>Weather Data</title>
 </head>
 <body>
-    <h1>Weather Data for {{ city }}</h1>
-    <p>Temperature: {{ temperature }} K</p>
-    <p>Humidity: {{ humidity }}%</p>
+    <div class="container">
+        <h1>Weather Data Visualizer</h1>
+        <form action="/weather" method="POST">
+            <input type="text" name="city" placeholder="Enter city name" required>
+            <button type="submit">Get Weather</button>
+        </form>
+        {% if city %}
+            <div class="weather-info">
+                <h2>Weather Data for {{ city }}</h2>
+                <p>Temperature: {{ temperature }} K</p>
+                <p>Humidity: {{ humidity }}%</p>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>
