@@ -1,10 +1,30 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from flask import Flask, render_template, request
 import requests
 from config import API_KEY
+from timezonefinder import TimezoneFinder
+from geopy.geocoders import Nominatim
+import pytz
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+
+def epoch_to_local(epoch, city):
+    geolocator = Nominatim(user_agent="city_timezone_converter")
+    location = geolocator.geocode(city)
+    latitude, longitude = location.latitude, location.longitude
+
+    tf = TimezoneFinder()
+    timezone_str = tf.timezone_at(lat=latitude, lng=longitude)
+    if timezone_str is None:
+        raise ValueError("Unable to determine timezone for the city.")
+    
+    timezone = pytz.timezone(timezone_str)
+    local_datetime = datetime.fromtimestamp(epoch, timezone)
+
+    return local_datetime.date(), local_datetime.time()
+
 
 def fetch_weather_data(city):
     try:
@@ -20,17 +40,16 @@ def fetch_weather_data(city):
         wind_direction = data["wind"]["deg"]
         icon = data["weather"][0]["icon"]
 
-        timezone_offset = data["timezone"]
 
-        sunrise_unix = data["sys"]["sunrise"]
-        sunset_unix = data["sys"]["sunset"]
-        current_unix = data["dt"]
+        sunrise_epoch = data["sys"]["sunrise"]
+        sunset_epoch = data["sys"]["sunset"]
+        current_datetime = data["dt"]
+        
 
-        sunrise_local = (datetime.utcfromtimestamp(sunrise_unix) + timedelta(seconds=timezone_offset)).strftime('%H:%M')
-        sunset_local = (datetime.utcfromtimestamp(sunset_unix) + timedelta(seconds=timezone_offset)).strftime('%H:%M')
 
-        current_local = (datetime.utcfromtimestamp(current_unix) + timedelta(seconds=timezone_offset)).strftime('%H:%M')
-        current_date = (datetime.utcfromtimestamp(current_unix) + timedelta(seconds=timezone_offset)).strftime('%d-%m-%y')
+        sunrise_date, sunrise_time = epoch_to_local(epoch=sunrise_epoch, city=city)
+        sunrise_date, sunset_time = epoch_to_local(epoch=sunset_epoch, city=city)
+        current_date, current_time = epoch_to_local(epoch=current_datetime, city=city)
 
         return {
             "city": city,
@@ -38,10 +57,10 @@ def fetch_weather_data(city):
             "description": description,
             "wind_speed": wind_speed,
             "wind_direction": wind_direction,
-            "sunrise": sunrise_local,
-            "sunset": sunset_local,
-            "current_time": current_local,
-            "current_date": current_date,
+            "sunrise": sunrise_time.strftime('%H:%M'),
+            "sunset": sunset_time.strftime('%H:%M'),
+            "current_time": current_time.strftime('%H:%M'),
+            "current_date": current_date.strftime('%d/%m/%Y'),
             "icon": icon
         }
 
