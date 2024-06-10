@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Weather App</h1>
+    <form action="/" method="post">
+        <label for="city">Enter city name:</label>
+        <input type="text" id="city" name="city" required>
+        <button type="submit">Get Weather</button>
+    </form>
+    
+    {% if graph_html %}
+    <div>
+        <h2>Weather Data for {{ city }}</h2>
+        {{ graph_html|safe }}
+        <a href="/">Search for Another City</a>
+    </div>
+    {% endif %}
+</body>
+</html>

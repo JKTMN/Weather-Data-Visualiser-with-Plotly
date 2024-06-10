@@ -1,14 +1,16 @@
-from datetime import datetime
 from flask import Flask, render_template, request
-import requests
-from config import API_KEY
-from timezonefinder import TimezoneFinder
+from meteostat import Point, Daily
+from datetime import datetime, timedelta
+import plotly.graph_objs as go
+import plotly.io as pio
 from geopy.geocoders import Nominatim
+from timezonefinder import TimezoneFinder
+import requests
 import pytz
+from config import API_KEY
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-
 
 def epoch_to_local(epoch, city):
     geolocator = Nominatim(user_agent="city_timezone_converter")
@@ -25,7 +27,6 @@ def epoch_to_local(epoch, city):
 
     return local_datetime.date(), local_datetime.time()
 
-
 def fetch_weather_data(city):
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={API_KEY}"
@@ -40,12 +41,9 @@ def fetch_weather_data(city):
         wind_direction = data["wind"]["deg"]
         icon = data["weather"][0]["icon"]
 
-
         sunrise_epoch = data["sys"]["sunrise"]
         sunset_epoch = data["sys"]["sunset"]
         current_datetime = data["dt"]
-        
-
 
         sunrise_date, sunrise_time = epoch_to_local(epoch=sunrise_epoch, city=city)
         sunrise_date, sunset_time = epoch_to_local(epoch=sunset_epoch, city=city)
@@ -68,11 +66,27 @@ def fetch_weather_data(city):
         error_message = f"Error fetching weather data: {e}"
         return {"error": error_message}
 
-@app.route("/")
-def home():
-    return render_template("weather.html")
 
-@app.route("/weather", methods=["GET", "POST"])
+def get_city_coordinates(city):
+    geolocator = Nominatim(user_agent="YourApp/1.0")
+    location = geolocator.geocode(city)
+    if location:
+        return {'latitude': location.latitude, 'longitude': location.longitude}
+    else:
+        return None
+
+def create_plot(data):
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(x=data.index, y=data['tavg'], mode='lines+markers', name='Average Temperature'))
+    fig.add_trace(go.Scatter(x=data.index, y=data['tmin'], mode='lines+markers', name='Min Temperature'))
+    fig.add_trace(go.Scatter(x=data.index, y=data['tmax'], mode='lines+markers', name='Max Temperature'))
+
+    fig.update_layout(title='Historical Weather Data', xaxis_title='Date', yaxis_title='Temperature (°C)')
+
+    return fig
+
+@app.route("/", methods=["GET", "POST"])
 def weather():
     if request.method == "POST":
         city = request.form["city"]
@@ -80,7 +94,22 @@ def weather():
         if "error" in weather_data:
             return render_template("error.html", error_message=weather_data["error"])
         else:
-            return render_template("weather.html", **weather_data)
+            coordinates = get_city_coordinates(city)
+            if not coordinates:
+                return f"City {city} not found.", 404
+
+            end = datetime.now()
+            start = end - timedelta(days=30)
+
+            point = Point(coordinates['latitude'], coordinates['longitude'])
+            data = Daily(point, start, end)
+            data = data.fetch()
+
+            fig = create_plot(data)
+
+            graph_html = pio.to_html(fig, full_html=False)
+
+            return render_template("weather.html", city=city, weather_data=weather_data, graph_html=graph_html)
 
     return render_template("weather.html")
 

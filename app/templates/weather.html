@@ -2,55 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Data Visualizer</title>
+    <title>Weather App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Weather Data Visualizer</h1>
-        <form action="/weather" method="POST">
+        <h1>Weather App</h1>
+        <form action="/" method="POST">
             <input type="text" name="city" placeholder="Enter city name" required>
             <button type="submit">Get Weather</button>
         </form>
-        {% if city %}
+        {% if weather_data %}
             <div class="weather-info">
-                <h2>Weather Data for {{ city }}</h2>
+                <h2>Weather Data for {{ weather_data.city }}</h2>
                 <div class="weather-details">
                     <div class="weather-item">
                         <span class="label">Current Time:</span>
-                        <span class="value">{{ current_time }}</span>
+                        <span class="value">{{ weather_data.current_time }}</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Current Date:</span>
-                        <span class="value">{{ current_date }}</span>
+                        <span class="value">{{ weather_data.current_date }}</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Temperature:</span>
-                        <span class="value">{{ temperature }} °C</span>
+                        <span class="value">{{ weather_data.temperature }} °C</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Description:</span>
-                        <span class="value">{{ description }}</span>
+                        <span class="value">{{ weather_data.description }}</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Wind Speed:</span>
-                        <span class="value">{{ wind_speed }} m/s</span>
+                        <span class="value">{{ weather_data.wind_speed }} m/s</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Wind Direction:</span>
-                        <span class="value">{{ wind_direction }}°</span>
+                        <span class="value">{{ weather_data.wind_direction }}°</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Sunrise:</span>
-                        <span class="value">{{ sunrise }}</span>
+                        <span class="value">{{ weather_data.sunrise }}</span>
                     </div>
                     <div class="weather-item">
                         <span class="label">Sunset:</span>
-                        <span class="value">{{ sunset }}</span>
+                        <span class="value">{{ weather_data.sunset }}</span>
                     </div>
                 </div>
-                <img src="http://openweathermap.org/img/wn/{{ icon }}.png" alt="Weather Icon">
+                <img src="http://openweathermap.org/img/wn/{{ weather_data.icon }}.png" alt="Weather Icon">
+            </div>
+        {% endif %}
+        {% if graph_html %}
+            <div class="graph">
+                <h2>Historical Data for {{ city }}</h2>
+                {{ graph_html|safe }}
             </div>
         {% endif %}
     </div>
